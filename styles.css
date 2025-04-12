@@ -1,0 +1,194 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: white;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header styles */
+header {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  padding: 1rem 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+nav button {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 1rem;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+nav button:hover {
+  color: #60a5fa;
+}
+
+/* Main content styles */
+main {
+  padding: 8rem 1rem 4rem;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.tool-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
+}
+
+.tool-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.tool-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tool-icon {
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  margin-right: 1rem;
+}
+
+.tool-card p {
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.download-btn:hover {
+  background: #2563eb;
+}
+
+.download-btn svg {
+  margin-right: 0.5rem;
+}
+
+/* Footer styles */
+footer {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  padding: 1.5rem 0;
+  text-align: center;
+  color: #94a3b8;
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  padding: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close-btn:hover {
+  color: white;
+}
+
+#modal-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+#modal-content {
+  white-space: pre-line;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
