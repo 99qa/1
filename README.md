@@ -3,6 +3,7 @@
 ## 概要
 
 This is a web application that allows you to easily enjoy music by simply entering a YouTube playlist URL. 
+
 No cumbersome account registration or additional fees are required, and the service is completely free.
 
 ## 使用方法
@@ -24,13 +25,18 @@ No cumbersome account registration or additional fees are required, and the serv
 ## 技術スタック
 
 HTML: アプリケーションの構造を定義し、コンテンツを表示するために使用。
+
 CSS: スタイリングとレイアウトを担当し、ユーザーインターフェースを魅力的にするために使用。
+
 JavaScript: インタラクティブな機能を実装し、ユーザーの操作に応じた動的なコンテンツを提供。
 
 ## ライセンス
 
 個人利用: このソフトウェアは、個人の学習や研究目的での使用は許可されています。
+
 改変の禁止: コードを改変したり、独自のプロジェクトに組み込むことは禁止されています。
+
 再配布の禁止: このソフトウェアをそのまま再配布することは禁止されています。
+
 著作権表示: 元の著作権表示を保持する必要がありますが、無断での使用や複製は許可されません。
 
