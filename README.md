@@ -2,9 +2,9 @@
 
 ## 概要
 
-This is a web application that allows you to easily enjoy music by simply entering a YouTube playlist URL. 
+YouTubeのプレイリストURLを入力するだけで、簡単に音楽を楽しめるウェブアプリケーションです。
 
-No cumbersome account registration or additional fees are required, and the service is completely free.
+面倒なアカウント登録や追加料金は一切不要で、完全無料でご利用いただけます。
 
 ## 使用方法
 
@@ -35,14 +35,6 @@ No cumbersome account registration or additional fees are required, and the serv
 YouTubeプレイリストURLの入力機能を実装
 シンプルなユーザーインターフェースを提供
 バックグラウンド再生機能のサポート
-
-## 技術スタック
-
-HTML: アプリケーションの構造を定義し、コンテンツを表示するために使用。
-
-CSS: スタイリングとレイアウトを担当し、ユーザーインターフェースを魅力的にするために使用。
-
-JavaScript: インタラクティブな機能を実装し、ユーザーの操作に応じた動的なコンテンツを提供。
 
 ## 寄付
 
