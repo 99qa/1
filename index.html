@@ -3,184 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouSound! Beta</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>YouSound!</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
+  <div class="container">
     <header>
       <div class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-        <h1>YouSound! - Beta</h1>
+        <span class="icon music-icon"></span>
+        <h1>YouSound! v1.1</h1>
       </div>
       <nav>
-        <button id="helpBtn" title="ヘルプ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        </button>
-        <button id="donateBtn" class="donate-btn" title="寄付する">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-          <span>寄付</span>
-        </button>
-        <button id="termsBtn" title="利用規約">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-2 12 2-2 2 2-2-12z"></path><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4l2 4h4l2-4h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"></path></svg>
-        </button>
-        <button id="themeBtn" title="テーマ切り替え">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
-        </button>
+        <a href="/" class="nav-link home-icon" title="ホーム">🏠</a>
+        <button id="termsButton" class="nav-link scale-icon" title="利用規約">⚖️</button>
       </nav>
     </header>
 
-    <main>
-      <form id="urlForm" class="url-form">
-        <div class="input-wrapper">
-          <input type="text" id="urlInput" placeholder="YouTubeのプレイリストURLを入力" required>
-          <button type="submit" id="loadBtn">
-            <span>読み込み</span>
-            <div class="loader"></div>
-          </button>
-        </div>
-        <p id="errorMessage" class="error-message"></p>
-      </form>
-
-      <div id="player" class="player hidden">
-        <div id="youtubePlayer"></div>
-        <div class="player-info">
-          <h2 id="songTitle">読み込み中...</h2>
-          <p id="channelTitle">チャンネル読み込み中...</p>
-        </div>
-        <div class="player-controls">
-          <button id="prevBtn" title="前の曲">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg>
-          </button>
-          <button id="playPauseBtn" class="play-btn" title="再生/一時停止">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          </button>
-          <button id="nextBtn" title="次の曲">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 17 5-5-5-5"></path><path d="m6 17 5-5-5-5"></path></svg>
-          </button>
-        </div>
-        <div class="player-options">
-          <div class="volume-control">
-            <button id="volumeBtn" title="音量">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-            </button>
-            <div id="volumeSlider" class="volume-slider hidden">
-              <input type="range" min="0" max="100" value="100">
-            </div>
+    <form id="urlForm" class="url-form">
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="urlInput" 
+          placeholder="YouTubeのプレイリストURLを入力"
+          required
+          autocomplete="off"
+        >
+        <button type="submit" id="loadButton">読み込み</button>
+        <div id="historyDropdown" class="history-dropdown hidden">
+          <div class="history-header">
+            <span>履歴</span>
+            <button type="button" id="clearHistory" class="clear-history">クリア</button>
           </div>
-          <button id="shuffleBtn" title="シャッフル">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"></path><path d="m18 2 4 4-4 4"></path><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"></path><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"></path><path d="m18 14 4 4-4 4"></path></svg>
-          </button>
-          <button id="repeatBtn" title="リピート">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
-          </button>
-          <button id="shareBtn" title="共有">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-          </button>
+          <div id="historyList" class="history-list"></div>
         </div>
       </div>
-    </main>
+    </form>
 
-    <!-- モーダル -->
-    <div id="helpModal" class="modal hidden">
-      <div class="modal-content">
-        <button class="close-btn">×</button>
-        <h2>使い方ガイド</h2>
-        <div class="modal-body">
-          <section>
-            <h3>1. プレイリストの再生</h3>
-            <p>YouTubeのプレイリストURLを入力フィールドに貼り付けて「読み込み」ボタンをクリックします。</p>
-            <div class="code-example">
-              <p>💡 プレイリストURLの例:</p>
-              <code>https://www.youtube.com/playlist?list=PLxxxxxxxx</code>
-            </div>
-          </section>
-          <section>
-            <h3>2. 基本操作</h3>
-            <ul>
-              <li>再生/一時停止: 中央の大きな再生ボタン</li>
-              <li>前後の曲: 左右の矢印ボタン</li>
-              <li>音量調整: スピーカーアイコンをクリック</li>
-              <li>シャッフル再生: シャッフルアイコン</li>
-              <li>リピート再生: リピートアイコン</li>
-            </ul>
-          </section>
-          <section>
-            <h3>3. トラブルシューティング</h3>
-            <ul>
-              <li>URLが無効な場合はエラーメッセージが表示されます</li>
-              <li>再生できない動画はスキップされます</li>
-              <li>ページを更新すると最初からやり直せます</li>
-            </ul>
-          </section>
+    <div id="player-container" class="player-container hidden">
+      <div id="player"></div>
+      
+      <div class="song-info">
+        <h2 id="songTitle">読み込み中...</h2>
+        <p id="channelTitle">チャンネル読み込み中...</p>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="time-display">
+          <span id="currentTime">0:00</span>
+          <span id="duration">0:00</span>
         </div>
       </div>
-    </div>
 
-    <div id="donateModal" class="modal hidden">
-      <div class="modal-content">
-        <button class="close-btn">×</button>
-        <h2>プロジェクトを支援</h2>
-        <div class="modal-body">
-          <div class="donation-tiers">
-            <div class="donation-tier">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14c.889-.889 2.111-2.111 2.111-4.111C19.111 7.778 17.333 6 15.222 6c-1.333 0-2.667.444-4.222 2C9.444 6.444 8.11 6 6.778 6 4.667 6 2.889 7.778 2.889 9.889c0 2 1.222 3.222 2.111 4.111L11 20l6-6z"></path></svg>
-              <h3>コーヒー</h3>
-              <p>コーヒーをご馳走</p>
-              <ul>
-                <li>開発のサポート</li>
-                <li>支援の気持ち</li>
-              </ul>
-              <button class="donate-tier-btn" data-amount="500">¥500 寄付</button>
-            </div>
-            <div class="donation-tier">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-              <h3>スター</h3>
-              <p>スターサポーター</p>
-              <ul>
-                <li>クレジットに名前掲載</li>
-                <li>新機能の先行アクセス</li>
-              </ul>
-              <button class="donate-tier-btn" data-amount="1000">¥1,000 寄付</button>
-            </div>
-            <div class="donation-tier">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h20v8a4 4 0 0 1-4 4h-2v4l-4-4H2V4z"></path></svg>
-              <h3>プレミアム</h3>
-              <p>プレミアムサポーター</p>
-              <ul>
-                <li>カスタムテーマ</li>
-                <li>優先サポート</li>
-                <li>広告なし</li>
-              </ul>
-              <button class="donate-tier-btn" data-amount="2500">¥2,500 寄付</button>
-            </div>
+      <div class="controls">
+        <button id="prevButton" class="control-button skip-back-icon" title="前の曲">⏮️</button>
+        <button id="playPauseButton" class="control-button play-icon" title="再生/一時停止">▶️</button>
+        <button id="nextButton" class="control-button skip-forward-icon" title="次の曲">⏭️</button>
+      </div>
+
+      <div class="secondary-controls">
+        <div class="volume-control">
+          <button id="volumeButton" class="control-button volume-icon" title="音量">🔊</button>
+          <div id="volumeSlider" class="volume-slider hidden">
+            <input type="range" min="0" max="100" value="100">
+            <span id="volumeDisplay">100%</span>
           </div>
         </div>
+        <button id="shuffleButton" class="control-button shuffle-icon" title="シャッフル">🔀</button>
+        <button id="loopButton" class="control-button repeat-icon" title="リピート">🔁</button>
+        <button id="shareButton" class="control-button share-icon" title="共有">📤</button>
+        <button id="fullscreenButton" class="control-button fullscreen-icon" title="フルスクリーン">⛶</button>
       </div>
     </div>
+  </div>
 
-    <div id="termsModal" class="modal hidden">
-      <div class="modal-content">
-        <button class="close-btn">×</button>
-        <h2>利用規約</h2>
-        <div class="modal-body">
-          <section>
-            <h3>1. サービスの利用</h3>
-            <p>このサービスはYouTubeのプレイリストを再生することができます。利用にあたってはYouTubeの利用規約に従う必要があります。</p>
-          </section>
-          <section>
-            <h3>2. コンテンツの権利</h3>
-            <p>このサービスを通じて再生されるすべてのコンテンツは、それぞれの権利者に帰属します。当サービスではメディアコンテンツの保存や配信は行いません。</p>
-          </section>
-          <section>
-            <h3>3. 公正な使用</h3>
-            <p>このサービスは個人的な非営利目的での使用のみを想定しています。著作権法とコンテンツ制作者の権利を尊重してください。</p>
-          </section>
-          <section>
-            <h3>4. プライバシー</h3>
-            <p>当サービスは個人情報を収集・保存しません。プレイリストのURLはセッション間で保存されません。</p>
-          </section>
-        </div>
+  <!-- Terms Modal -->
+  <div id="termsModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-button">✕</button>
+      <h2>利用規約</h2>
+      <div class="terms-content">
+        <section>
+          <h3>1. サービスの利用</h3>
+          <p>このサービスはYouTubeのプレイリストを再生することができます。利用にあたってはYouTubeの利用規約に従う必要があります。</p>
+        </section>
+        <section>
+          <h3>2. コンテンツの権利</h3>
+          <p>このサービスを通じて再生されるすべてのコンテンツは、それぞれの権利者に帰属します。当サービスではメディアコンテンツの保存や配信は行いません。</p>
+        </section>
+        <section>
+          <h3>3. 公正な使用</h3>
+          <p>このサービスは個人的な非営利目的での使用のみを想定しています。著作権法とコンテンツ制作者の権利を尊重してください。</p>
+        </section>
+        <section>
+          <h3>4. プライバシー</h3>
+          <p>当サービスは個人情報を収集・保存しません。プレイリストのURLはローカルストレージに保存され、ブラウザ内でのみ利用されます。</p>
+        </section>
+        <section>
+          <h3>5. 免責事項</h3>
+          <p>このサービスは「現状のまま」提供され、いかなる保証もありません。サービスを通じて再生されるコンテンツについて、当サービスは責任を負いません。</p>
+        </section>
       </div>
     </div>
   </div>
