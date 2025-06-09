@@ -1,48 +1,128 @@
 let player;
-let isLoading = false;
+let isPlaying = false;
+let volume = 100;
+let isLooping = false;
+let isShuffled = false;
+let currentTime = 0;
+let duration = 0;
+let progressInterval;
+let urlHistory = [];
+
+// ローカルストレージから履歴を読み込み
+function loadHistory() {
+  const saved = localStorage.getItem('youtubePlaylistHistory');
+  if (saved) {
+    try {
+      urlHistory = JSON.parse(saved);
+    } catch (e) {
+      urlHistory = [];
+    }
+  }
+}
+
+// 履歴をローカルストレージに保存
+function saveHistory() {
+  localStorage.setItem('youtubePlaylistHistory', JSON.stringify(urlHistory));
+}
+
+// 履歴にURLを追加
+function addToHistory(url) {
+  const existingIndex = urlHistory.findIndex(item => item.url === url);
+  if (existingIndex !== -1) {
+    urlHistory.splice(existingIndex, 1);
+  }
+  
+  urlHistory.unshift({
+    url: url,
+    date: new Date().toLocaleString('ja-JP'),
+    timestamp: Date.now()
+  });
+  
+  // 最大20件まで保持
+  if (urlHistory.length > 20) {
+    urlHistory = urlHistory.slice(0, 20);
+  }
+  
+  saveHistory();
+  updateHistoryDisplay();
+}
+
+// 履歴表示を更新
+function updateHistoryDisplay() {
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = '';
+  
+  if (urlHistory.length === 0) {
+    historyList.innerHTML = '<div class="history-item" style="text-align: center; opacity: 0.6;">履歴がありません</div>';
+    return;
+  }
+  
+  urlHistory.forEach((item, index) => {
+    const historyItem = document.createElement('div');
+    historyItem.className = 'history-item';
+    historyItem.innerHTML = `
+      <div class="history-url">${item.url}</div>
+      <div class="history-date">${item.date}</div>
+    `;
+    historyItem.addEventListener('click', () => {
+      document.getElementById('urlInput').value = item.url;
+      hideHistoryDropdown();
+    });
+    historyList.appendChild(historyItem);
+  });
+}
+
+// 履歴ドロップダウンを表示
+function showHistoryDropdown() {
+  const dropdown = document.getElementById('historyDropdown');
+  dropdown.classList.remove('hidden');
+  updateHistoryDisplay();
+}
+
+// 履歴ドロップダウンを非表示
+function hideHistoryDropdown() {
+  const dropdown = document.getElementById('historyDropdown');
+  dropdown.classList.add('hidden');
+}
+
+// 履歴をクリア
+function clearHistory() {
+  urlHistory = [];
+  saveHistory();
+  updateHistoryDisplay();
+  showNotification('履歴をクリアしました', 'success');
+}
+
+// 時間をフォーマット
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+// プログレスバーを更新
+function updateProgress() {
+  if (player && player.getCurrentTime && player.getDuration) {
+    try {
+      currentTime = player.getCurrentTime();
+      duration = player.getDuration();
+      
+      if (duration > 0) {
+        const progressPercent = (currentTime / duration) * 100;
+        document.getElementById('progressFill').style.width = `${progressPercent}%`;
+        document.getElementById('currentTime').textContent = formatTime(currentTime);
+        document.getElementById('duration').textContent = formatTime(duration);
+      }
+    } catch (err) {
+      // プレーヤーがまだ準備できていない場合は無視
+    }
+  }
+}
 
 // YouTube IFrame API の準備
 function onYouTubeIframeAPIReady() {
-  // プレーヤーの初期化は URL 入力後に行う
+  // プレーヤーは後で初期化されます
 }
-
-// DOM要素の取得
-const urlForm = document.getElementById('urlForm');
-const urlInput = document.getElementById('urlInput');
-const loadBtn = document.getElementById('loadBtn');
-const errorMessage = document.getElementById('errorMessage');
-const playerContainer = document.getElementById('player');
-const songTitle = document.getElementById('songTitle');
-const channelTitle = document.getElementById('channelTitle');
-const playPauseBtn = document.getElementById('playPauseBtn');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const volumeBtn = document.getElementById('volumeBtn');
-const volumeSlider = document.getElementById('volumeSlider');
-const volumeRange = volumeSlider.querySelector('input');
-const shuffleBtn = document.getElementById('shuffleBtn');
-const repeatBtn = document.getElementById('repeatBtn');
-const shareBtn = document.getElementById('shareBtn');
-
-// モーダル関連の要素
-const modals = document.querySelectorAll('.modal');
-const helpBtn = document.getElementById('helpBtn');
-const helpModal = document.getElementById('helpModal');
-const donateBtn = document.getElementById('donateBtn');
-const donateModal = document.getElementById('donateModal');
-const termsBtn = document.getElementById('termsBtn');
-const termsModal = document.getElementById('termsModal');
-const closeBtns = document.querySelectorAll('.close-btn');
-const themeBtn = document.getElementById('themeBtn');
-
-// プレーヤーの状態
-let playerState = {
-  isPlaying: false,
-  volume: 100,
-  isLooping: false,
-  isShuffled: false,
-  isDarkMode: true
-};
 
 // URLからプレイリストIDを抽出
 function extractPlaylistId(url) {
@@ -61,7 +141,7 @@ function extractPlaylistId(url) {
 function validateYouTubeUrl(url) {
   try {
     const urlObj = new URL(url);
-    return urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com';
+    return urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com' || urlObj.hostname === 'youtu.be';
   } catch {
     return false;
   }
@@ -72,8 +152,8 @@ function initializePlayer(playlistId) {
   if (player) {
     player.destroy();
   }
-
-  player = new YT.Player('youtubePlayer', {
+  
+  player = new YT.Player('player', {
     height: '100%',
     width: '100%',
     playerVars: {
@@ -84,8 +164,11 @@ function initializePlayer(playlistId) {
       modestbranding: 1,
       rel: 0,
       showinfo: 0,
-      cc_load_policy: 3,
-      cc_lang_pref: 'ja'
+      iv_load_policy: 3,
+      cc_load_policy: 0,
+      disablekb: 1,
+      fs: 1,
+      playsinline: 1
     },
     events: {
       onReady: onPlayerReady,
@@ -97,193 +180,430 @@ function initializePlayer(playlistId) {
 
 // プレーヤーの準備完了時
 function onPlayerReady(event) {
-  event.target.setVolume(playerState.volume);
-  updatePlayPauseButton();
-  playerContainer.classList.remove('hidden');
-  isLoading = false;
-  loadBtn.classList.remove('loading');
+  event.target.setVolume(volume);
+  if (isLooping) {
+    event.target.setLoop(true);
+  }
+  if (isShuffled) {
+    event.target.setShuffle(true);
+  }
+  updateSongInfo();
+  
+  // プログレス更新を開始
+  progressInterval = setInterval(updateProgress, 1000);
 }
 
 // プレーヤーの状態変更時
 function onPlayerStateChange(event) {
-  playerState.isPlaying = event.data === YT.PlayerState.PLAYING;
+  isPlaying = event.data === YT.PlayerState.PLAYING;
   updatePlayPauseButton();
   updateSongInfo();
+  
+  if (isPlaying) {
+    if (!progressInterval) {
+      progressInterval = setInterval(updateProgress, 1000);
+    }
+  } else {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+  }
 }
 
-// プレーヤーのエラー時
+// エラー発生時
 function onPlayerError(event) {
-  console.error('Player error:', event.data);
-  errorMessage.textContent = '動画の読み込みに失敗しました。別のプレイリストを試してください。';
-  isLoading = false;
-  loadBtn.classList.remove('loading');
+  let message = '動画の読み込みに失敗しました。';
+  
+  switch (event.data) {
+    case 2:
+      message = '無効なパラメータです。URLを確認してください。';
+      break;
+    case 5:
+      message = 'HTML5プレーヤーでエラーが発生しました。';
+      break;
+    case 100:
+      message = '動画が見つかりません。';
+      break;
+    case 101:
+    case 150:
+      message = '動画の所有者が埋め込みを許可していません。';
+      break;
+  }
+  
+  showNotification(message, 'error');
 }
 
 // 再生/一時停止ボタンの更新
 function updatePlayPauseButton() {
-  playPauseBtn.innerHTML = playerState.isPlaying
-    ? '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>'
-    : '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+  const button = document.getElementById('playPauseButton');
+  button.className = `control-button ${isPlaying ? 'pause-icon' : 'play-icon'}`;
 }
 
 // 曲情報の更新
 function updateSongInfo() {
   if (player && player.getVideoData) {
-    const videoData = player.getVideoData();
-    if (videoData) {
-      songTitle.textContent = videoData.title || '読み込み中...';
-      channelTitle.textContent = videoData.author || 'チャンネル読み込み中...';
+    try {
+      const data = player.getVideoData();
+      if (data && data.title && data.author) {
+        document.getElementById('songTitle').textContent = data.title;
+        document.getElementById('channelTitle').textContent = data.author;
+      }
+    } catch (err) {
+      console.error('動画データの取得に失敗:', err);
     }
   }
 }
 
-// フォームの送信処理
-urlForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (isLoading) return;
+// 通知を表示
+function showNotification(message, type = 'info') {
+  // 既存の通知を削除
+  const existingNotifications = document.querySelectorAll('.notification');
+  existingNotifications.forEach(notification => notification.remove());
+  
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
 
-  const url = urlInput.value.trim();
-  errorMessage.textContent = '';
+  // アニメーション用のクラスを追加
+  setTimeout(() => notification.classList.add('show'), 100);
 
-  if (!validateYouTubeUrl(url)) {
-    errorMessage.textContent = 'YouTubeの有効なURLを入力してください';
-    return;
-  }
+  // 3秒後に通知を削除
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 300);
+  }, 3000);
+}
 
-  const playlistId = extractPlaylistId(url);
-  if (!playlistId) {
-    errorMessage.textContent = 'プレイリストIDが見つかりませんでした';
-    return;
-  }
-
-  isLoading = true;
-  loadBtn.classList.add('loading');
-  initializePlayer(playlistId);
-});
-
-// 再生コントロール
-playPauseBtn.addEventListener('click', () => {
-  if (!player) return;
-  if (playerState.isPlaying) {
-    player.pauseVideo();
+// フルスクリーン切り替え
+function toggleFullscreen() {
+  const playerContainer = document.getElementById('player-container');
+  
+  if (!document.fullscreenElement) {
+    playerContainer.requestFullscreen().then(() => {
+      showNotification('フルスクリーンモード');
+    }).catch(() => {
+      showNotification('フルスクリーンに失敗しました', 'error');
+    });
   } else {
-    player.playVideo();
+    document.exitFullscreen().then(() => {
+      showNotification('フルスクリーン終了');
+    });
   }
-});
-
-prevBtn.addEventListener('click', () => {
-  if (player) {
-    player.previousVideo();
-  }
-});
-
-nextBtn.addEventListener('click', () => {
-  if (player) {
-    player.nextVideo();
-  }
-});
-
-// 音量コントロール
-volumeBtn.addEventListener('click', () => {
-  volumeSlider.classList.toggle('hidden');
-});
-
-volumeBtn.addEventListener('mouseenter', () => {
-  volumeSlider.classList.remove('hidden');
-});
-
-volumeSlider.addEventListener('mouseleave', () => {
-  volumeSlider.classList.add('hidden');
-});
-
-volumeRange.addEventListener('input', (e) => {
-  const newVolume = parseInt(e.target.value);
-  if (player) {
-    player.setVolume(newVolume);
-    playerState.volume = newVolume;
-    updateVolumeIcon();
-  }
-});
-
-function updateVolumeIcon() {
-  const volume = playerState.volume;
-  let icon;
-  if (volume === 0) {
-    icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
-  } else if (volume < 50) {
-    icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
-  } else {
-    icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
-  }
-  volumeBtn.innerHTML = icon;
 }
 
-// シャッフル・リピート
-shuffleBtn.addEventListener('click', () => {
-  if (!player) return;
-  playerState.isShuffled = !playerState.isShuffled;
-  player.setShuffle(playerState.isShuffled);
-  shuffleBtn.classList.toggle('text-blue-500');
-});
+// イベントリスナーの設定
+document.addEventListener('DOMContentLoaded', () => {
+  loadHistory();
+  
+  const urlForm = document.getElementById('urlForm');
+  const urlInput = document.getElementById('urlInput');
+  const playerContainer = document.getElementById('player-container');
+  const volumeButton = document.getElementById('volumeButton');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const volumeInput = volumeSlider.querySelector('input');
+  const volumeDisplay = document.getElementById('volumeDisplay');
+  const termsButton = document.getElementById('termsButton');
+  const termsModal = document.getElementById('termsModal');
+  const historyDropdown = document.getElementById('historyDropdown');
+  const clearHistoryButton = document.getElementById('clearHistory');
+  const progressBar = document.querySelector('.progress-bar');
 
-repeatBtn.addEventListener('click', () => {
-  if (!player) return;
-  playerState.isLooping = !playerState.isLooping;
-  player.setLoop(playerState.isLooping);
-  repeatBtn.classList.toggle('text-blue-500');
-});
+  // URLフォームの送信
+  urlForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const url = urlInput.value.trim();
+    
+    if (!url) {
+      showNotification('URLを入力してください', 'error');
+      return;
+    }
+    
+    if (!validateYouTubeUrl(url)) {
+      showNotification('YouTubeの有効なURLを入力してください', 'error');
+      return;
+    }
 
-// 共有
-shareBtn.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(window.location.href);
-    alert('URLをコピーしました！');
-  } catch (err) {
-    alert('URLのコピーに失敗しました');
-  }
-});
+    const playlistId = extractPlaylistId(url);
+    if (!playlistId) {
+      showNotification('プレイリストIDが見つかりませんでした', 'error');
+      return;
+    }
 
-// モーダル制御
-function openModal(modal) {
-  modal.classList.remove('hidden');
-}
-
-function closeModal(modal) {
-  modal.classList.add('hidden');
-}
-
-helpBtn.addEventListener('click', () => openModal(helpModal));
-donateBtn.addEventListener('click', () => openModal(donateModal));
-termsBtn.addEventListener('click', () => openModal(termsModal));
-
-closeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const modal = btn.closest('.modal');
-    closeModal(modal);
+    playerContainer.classList.remove('hidden');
+    initializePlayer(playlistId);
+    addToHistory(url);
+    hideHistoryDropdown();
+    showNotification('プレイリストを読み込みました！', 'success');
   });
-});
 
-modals.forEach(modal => {
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeModal(modal);
+  // 入力フィールドのフォーカス時に履歴を表示
+  urlInput.addEventListener('focus', () => {
+    if (urlHistory.length > 0) {
+      showHistoryDropdown();
     }
   });
-});
 
-// 寄付ボタン
-document.querySelectorAll('.donate-tier-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const amount = btn.dataset.amount;
-    window.open(`https://ko-fi.com/your-account?amount=${amount}`, '_blank');
+  // 入力フィールドの入力時
+  urlInput.addEventListener('input', (e) => {
+    if (e.target.value.trim() === '' && urlHistory.length > 0) {
+      showHistoryDropdown();
+    } else {
+      hideHistoryDropdown();
+    }
   });
+
+  // 履歴クリアボタン
+  clearHistoryButton.addEventListener('click', clearHistory);
+
+  // プログレスバークリック
+  progressBar.addEventListener('click', (e) => {
+    if (player && duration > 0) {
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = clickX / rect.width;
+      const seekTime = duration * percentage;
+      player.seekTo(seekTime);
+      showNotification(`${formatTime(seekTime)}にシーク`);
+    }
+  });
+
+  // 再生/一時停止
+  document.getElementById('playPauseButton').addEventListener('click', () => {
+    if (player) {
+      if (isPlaying) {
+        player.pauseVideo();
+        showNotification('一時停止');
+      } else {
+        player.playVideo();
+        showNotification('再生');
+      }
+    }
+  });
+
+  // 前の曲
+  document.getElementById('prevButton').addEventListener('click', () => {
+    if (player) {
+      player.previousVideo();
+      showNotification('前の曲を再生中');
+    }
+  });
+
+  // 次の曲
+  document.getElementById('nextButton').addEventListener('click', () => {
+    if (player) {
+      player.nextVideo();
+      showNotification('次の曲を再生中');
+    }
+  });
+
+  // 音量コントロール
+  volumeButton.addEventListener('click', () => {
+    volumeSlider.classList.toggle('hidden');
+  });
+
+  volumeInput.addEventListener('input', (e) => {
+    volume = parseInt(e.target.value);
+    if (player) {
+      player.setVolume(volume);
+    }
+    volumeDisplay.textContent = `${volume}%`;
+    
+    // 音量アイコンを更新
+    if (volume === 0) {
+      volumeButton.className = 'control-button volume-muted-icon';
+    } else {
+      volumeButton.className = 'control-button volume-icon';
+    }
+    
+    showNotification(`音量: ${volume}%`);
+  });
+
+  // シャッフル
+  document.getElementById('shuffleButton').addEventListener('click', () => {
+    if (player) {
+      isShuffled = !isShuffled;
+      player.setShuffle(isShuffled);
+      const button = document.getElementById('shuffleButton');
+      button.classList.toggle('active', isShuffled);
+      showNotification(isShuffled ? 'シャッフル: オン' : 'シャッフル: オフ');
+    }
+  });
+
+  // リピート
+  document.getElementById('loopButton').addEventListener('click', () => {
+    if (player) {
+      isLooping = !isLooping;
+      player.setLoop(isLooping);
+      const button = document.getElementById('loopButton');
+      button.classList.toggle('active', isLooping);
+      showNotification(isLooping ? 'リピート: オン' : 'リピート: オフ');
+    }
+  });
+
+  // 共有
+  document.getElementById('shareButton').addEventListener('click', async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'ソニックウェーブ - YouTube Music Player',
+          text: '素晴らしい音楽プレーヤーを見つけました！',
+          url: window.location.href
+        });
+        showNotification('共有しました！', 'success');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showNotification('URLをコピーしました！', 'success');
+      }
+    } catch (err) {
+      showNotification('共有に失敗しました', 'error');
+    }
+  });
+
+  // フルスクリーン
+  document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
+
+  // 利用規約モーダル
+  termsButton.addEventListener('click', () => {
+    termsModal.classList.remove('hidden');
+  });
+
+  // モーダルを閉じる
+  termsModal.querySelector('.close-button').addEventListener('click', () => {
+    termsModal.classList.add('hidden');
+  });
+
+  // モーダルの外側をクリックして閉じる
+  termsModal.addEventListener('click', (e) => {
+    if (e.target === termsModal) {
+      termsModal.classList.add('hidden');
+    }
+  });
+
+  // 音量スライダーを非表示にする
+  document.addEventListener('click', (e) => {
+    if (!volumeSlider.contains(e.target) && !volumeButton.contains(e.target)) {
+      volumeSlider.classList.add('hidden');
+    }
+    
+    // 履歴ドロップダウンを非表示にする
+    if (!historyDropdown.contains(e.target) && !urlInput.contains(e.target)) {
+      hideHistoryDropdown();
+    }
+  });
+
+  // キーボードショートカット
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    
+    switch (e.code) {
+      case 'Space':
+        e.preventDefault();
+        document.getElementById('playPauseButton').click();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        document.getElementById('prevButton').click();
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        document.getElementById('nextButton').click();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (volume < 100) {
+          volumeInput.value = Math.min(100, volume + 10);
+          volumeInput.dispatchEvent(new Event('input'));
+        }
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (volume > 0) {
+          volumeInput.value = Math.max(0, volume - 10);
+          volumeInput.dispatchEvent(new Event('input'));
+        }
+        break;
+      case 'KeyS':
+        e.preventDefault();
+        document.getElementById('shuffleButton').click();
+        break;
+      case 'KeyL':
+        e.preventDefault();
+        document.getElementById('loopButton').click();
+        break;
+      case 'KeyF':
+        e.preventDefault();
+        toggleFullscreen();
+        break;
+    }
+  });
+
+  // フルスクリーン変更イベント
+  document.addEventListener('fullscreenchange', () => {
+    const button = document.getElementById('fullscreenButton');
+    if (document.fullscreenElement) {
+      button.style.color = '#4fc3f7';
+    } else {
+      button.style.color = '';
+    }
+  });
+
+  // スタイルシートに通知用のスタイルを追加
+  const style = document.createElement('style');
+  style.textContent = `
+    .notification {
+      position: fixed;
+      top: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-3rem);
+      background: linear-gradient(135deg, rgba(30, 60, 114, 0.95), rgba(42, 82, 152, 0.95));
+      backdrop-filter: blur(20px);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      z-index: 2000;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      font-weight: 600;
+      font-size: 0.95rem;
+      max-width: 90vw;
+      text-align: center;
+    }
+    
+    .notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    
+    .notification.success {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(16, 185, 129, 0.95));
+    }
+    
+    .notification.error {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+    }
+    
+    @media (max-width: 480px) {
+      .notification {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        border-radius: 20px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 });
 
-// テーマ切り替え
-themeBtn.addEventListener('click', () => {
-  playerState.isDarkMode = !playerState.isDarkMode;
-  document.body.classList.toggle('light-theme');
-  themeBtn.innerHTML = playerState.isDarkMode
-    ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>'
-    : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>';
+// ページ離脱時にプログレス更新を停止
+window.addEventListener('beforeunload', () => {
+  if (progressInterval) {
+    clearInterval(progressInterval);
+  }
 });
