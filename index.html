@@ -1,9 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="ja">
-<head>
+<head><script>window.__sb_state = {"forwardPreviewErrors":true};</script><script src="/.localservice@runtime.858c0e43.js"></script><script src="/.localservice@wc-api-script.js"></script><script>delete window.__sb_w;document.querySelectorAll('script').forEach(n=>n.remove());</script>
+  <script type="module">
+import RefreshRuntime from "/@react-refresh"
+RefreshRuntime.injectIntoGlobalHook(window)
+window.$RefreshReg$ = () => {}
+window.$RefreshSig$ = () => (type) => type
+window.__vite_plugin_react_preamble_installed__ = true
+</script>
+
+  <script type="module" src="/@vite/client"></script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouSound!</title>
+  <title>YouSound! 1.1.1 -@99qa</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,11 +22,16 @@
     <header>
       <div class="logo">
         <span class="icon music-icon"></span>
-        <h1>YouSound! v1.1</h1>
+        <h1>YouSound! 1.1.1</h1>
       </div>
       <nav>
-        <a href="/" class="nav-link home-icon" title="ホーム">🏠</a>
+        <a href="https://github.com/99qa" target="_blank" class="nav-link github-icon" title="GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+        </a>
         <button id="termsButton" class="nav-link scale-icon" title="利用規約">⚖️</button>
+        <button id="guideButton" class="nav-link guide-icon" title="使い方">📖</button>
       </nav>
     </header>
 
@@ -24,7 +40,7 @@
         <input 
           type="text" 
           id="urlInput" 
-          placeholder="YouTubeのプレイリストURLを入力"
+          placeholder="YouTubeのURL（プレイリスト・動画・チャンネル）を入力"
           required
           autocomplete="off"
         >
@@ -32,7 +48,7 @@
         <div id="historyDropdown" class="history-dropdown hidden">
           <div class="history-header">
             <span>履歴</span>
-            <button type="button" id="clearHistory" class="clear-history">クリア</button>
+            <button type="button" id="clearHistory" class="clear-history">全削除</button>
           </div>
           <div id="historyList" class="history-list"></div>
         </div>
@@ -104,6 +120,93 @@
         <section>
           <h3>5. 免責事項</h3>
           <p>このサービスは「現状のまま」提供され、いかなる保証もありません。サービスを通じて再生されるコンテンツについて、当サービスは責任を負いません。</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usage Guide Modal -->
+  <div id="guideModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-button">✕</button>
+      <h2>使用方法</h2>
+      <div class="guide-content">
+        <section>
+          <h3>基本的な使い方</h3>
+          <div class="step-list">
+            <div class="step">
+              <span class="step-number">1</span>
+              <p>YouTubeのURL（プレイリスト・動画・チャンネル）をコピーします。</p>
+            </div>
+            <div class="step">
+              <span class="step-number">2</span>
+              <p>ソニックウェーブに貼り付けます。</p>
+            </div>
+            <div class="step">
+              <span class="step-number">3</span>
+              <p>「読み込み」ボタンをタップします。</p>
+            </div>
+          </div>
+        </section>
+        
+        <section>
+          <h3>スマホでバックグラウンド再生する方法</h3>
+          <div class="step-list">
+            <div class="step">
+              <span class="step-number">1</span>
+              <p>動画を再生します。</p>
+            </div>
+            <div class="step">
+              <span class="step-number">2</span>
+              <p>ホーム画面に戻ります。</p>
+            </div>
+            <div class="step">
+              <span class="step-number">3</span>
+              <p>コントロールセンターを開きます。</p>
+            </div>
+            <div class="step">
+              <span class="step-number">4</span>
+              <p>動画を再生します。</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>キーボードショートカット</h3>
+          <div class="shortcut-list">
+            <div class="shortcut">
+              <kbd>スペース</kbd>
+              <span>再生/一時停止</span>
+            </div>
+            <div class="shortcut">
+              <kbd>←</kbd>
+              <span>前の曲</span>
+            </div>
+            <div class="shortcut">
+              <kbd>→</kbd>
+              <span>次の曲</span>
+            </div>
+            <div class="shortcut">
+              <kbd>↑</kbd>
+              <span>音量アップ</span>
+            </div>
+            <div class="shortcut">
+              <kbd>↓</kbd>
+              <span>音量ダウン</span>
+            </div>
+            <div class="shortcut">
+              <kbd>S</kbd>
+              <span>シャッフル切り替え</span>
+            </div>
+            <div class="shortcut">
+              <kbd>L</kbd>
+              <span>リピート切り替え</span>
+            </div>
+            <div class="shortcut">
+              <kbd>F</kbd>
+              <span>フルスクリーン</span>
+            </div>
+          </div>
         </section>
       </div>
     </div>
