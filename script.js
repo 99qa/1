@@ -47,6 +47,14 @@ function addToHistory(url) {
   updateHistoryDisplay();
 }
 
+// 履歴から1つのアイテムを削除
+function removeFromHistory(index) {
+  urlHistory.splice(index, 1);
+  saveHistory();
+  updateHistoryDisplay();
+  showNotification('履歴を削除しました', 'success');
+}
+
 // 履歴表示を更新
 function updateHistoryDisplay() {
   const historyList = document.getElementById('historyList');
@@ -61,13 +69,25 @@ function updateHistoryDisplay() {
     const historyItem = document.createElement('div');
     historyItem.className = 'history-item';
     historyItem.innerHTML = `
-      <div class="history-url">${item.url}</div>
-      <div class="history-date">${item.date}</div>
+      <div class="history-content">
+        <div class="history-url">${item.url}</div>
+        <div class="history-date">${item.date}</div>
+      </div>
+      <button class="delete-history-item" data-index="${index}" title="削除">🗑️</button>
     `;
-    historyItem.addEventListener('click', () => {
+    
+    // URLクリックで入力フィールドに設定
+    historyItem.querySelector('.history-content').addEventListener('click', () => {
       document.getElementById('urlInput').value = item.url;
       hideHistoryDropdown();
     });
+    
+    // 削除ボタンのイベント
+    historyItem.querySelector('.delete-history-item').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeFromHistory(index);
+    });
+    
     historyList.appendChild(historyItem);
   });
 }
@@ -124,16 +144,47 @@ function onYouTubeIframeAPIReady() {
   // プレーヤーは後で初期化されます
 }
 
-// URLからプレイリストIDを抽出
-function extractPlaylistId(url) {
+// URLから動画ID、プレイリストID、チャンネルIDを抽出
+function extractYouTubeIds(url) {
   try {
     const urlObj = new URL(url);
     const searchParams = new URLSearchParams(urlObj.search);
-    return searchParams.get('list');
+    
+    // プレイリストID
+    const playlistId = searchParams.get('list');
+    if (playlistId) {
+      return { type: 'playlist', id: playlistId };
+    }
+    
+    // 動画ID
+    let videoId = searchParams.get('v');
+    if (!videoId && urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.slice(1);
+    }
+    if (videoId) {
+      return { type: 'video', id: videoId };
+    }
+    
+    // チャンネルID
+    const channelMatch = urlObj.pathname.match(/\/(channel|c|user)\/([^\/]+)/);
+    if (channelMatch) {
+      return { type: 'channel', id: channelMatch[2] };
+    }
+    
+    return null;
   } catch {
-    const regex = /[?&]list=([^#\&\?]+)/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+    // 正規表現でのフォールバック
+    const playlistMatch = url.match(/[?&]list=([^#\&\?]+)/);
+    if (playlistMatch) {
+      return { type: 'playlist', id: playlistMatch[1] };
+    }
+    
+    const videoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^#\&\?]+)/);
+    if (videoMatch) {
+      return { type: 'video', id: videoMatch[1] };
+    }
+    
+    return null;
   }
 }
 
@@ -148,28 +199,39 @@ function validateYouTubeUrl(url) {
 }
 
 // プレーヤーの初期化
-function initializePlayer(playlistId) {
+function initializePlayer(youtubeData) {
   if (player) {
     player.destroy();
+  }
+  
+  let playerVars = {
+    autoplay: 1,
+    controls: 0,
+    modestbranding: 1,
+    rel: 0,
+    showinfo: 0,
+    iv_load_policy: 3,
+    cc_load_policy: 0,
+    disablekb: 1,
+    fs: 1,
+    playsinline: 1
+  };
+  
+  // タイプに応じてパラメータを設定
+  if (youtubeData.type === 'playlist') {
+    playerVars.listType = 'playlist';
+    playerVars.list = youtubeData.id;
+  } else if (youtubeData.type === 'video') {
+    playerVars.videoId = youtubeData.id;
+  } else if (youtubeData.type === 'channel') {
+    playerVars.listType = 'user_uploads';
+    playerVars.list = youtubeData.id;
   }
   
   player = new YT.Player('player', {
     height: '100%',
     width: '100%',
-    playerVars: {
-      listType: 'playlist',
-      list: playlistId,
-      autoplay: 1,
-      controls: 0,
-      modestbranding: 1,
-      rel: 0,
-      showinfo: 0,
-      iv_load_policy: 3,
-      cc_load_policy: 0,
-      disablekb: 1,
-      fs: 1,
-      playsinline: 1
-    },
+    playerVars: playerVars,
     events: {
       onReady: onPlayerReady,
       onStateChange: onPlayerStateChange,
@@ -310,6 +372,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const volumeDisplay = document.getElementById('volumeDisplay');
   const termsButton = document.getElementById('termsButton');
   const termsModal = document.getElementById('termsModal');
+  const guideButton = document.getElementById('guideButton');
+  const guideModal = document.getElementById('guideModal');
   const historyDropdown = document.getElementById('historyDropdown');
   const clearHistoryButton = document.getElementById('clearHistory');
   const progressBar = document.querySelector('.progress-bar');
@@ -329,17 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const playlistId = extractPlaylistId(url);
-    if (!playlistId) {
-      showNotification('プレイリストIDが見つかりませんでした', 'error');
+    const youtubeData = extractYouTubeIds(url);
+    if (!youtubeData) {
+      showNotification('有効なYouTube URLが見つかりませんでした', 'error');
       return;
     }
 
     playerContainer.classList.remove('hidden');
-    initializePlayer(playlistId);
+    initializePlayer(youtubeData);
     addToHistory(url);
     hideHistoryDropdown();
-    showNotification('プレイリストを読み込みました！', 'success');
+    
+    const typeText = youtubeData.type === 'playlist' ? 'プレイリスト' : 
+                    youtubeData.type === 'video' ? '動画' : 'チャンネル';
+    showNotification(`${typeText}を読み込みました！`, 'success');
   });
 
   // 入力フィールドのフォーカス時に履歴を表示
@@ -473,16 +540,26 @@ document.addEventListener('DOMContentLoaded', () => {
     termsModal.classList.remove('hidden');
   });
 
+  // 使い方ガイドモーダル
+  guideButton.addEventListener('click', () => {
+    guideModal.classList.remove('hidden');
+  });
+
   // モーダルを閉じる
-  termsModal.querySelector('.close-button').addEventListener('click', () => {
-    termsModal.classList.add('hidden');
+  document.querySelectorAll('.close-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const modal = e.target.closest('.modal');
+      modal.classList.add('hidden');
+    });
   });
 
   // モーダルの外側をクリックして閉じる
-  termsModal.addEventListener('click', (e) => {
-    if (e.target === termsModal) {
-      termsModal.classList.add('hidden');
-    }
+  [termsModal, guideModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
   });
 
   // 音量スライダーを非表示にする
